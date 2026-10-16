@@ -46,31 +46,41 @@ interface DatabaseSchema {
   orders: Record<string, Order>; // Keyed by order ID
 }
 
-const DB_FILE_PATH = path.resolve(process.cwd(), 'server/data/orders.json');
+let inMemoryDb: DatabaseSchema = { orders: {} };
+
+const DB_FILE_PATH = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME
+  ? path.resolve('/tmp', 'orders.json')
+  : path.resolve(process.cwd(), 'server/data/orders.json');
 
 // Ensure storage directory and file exist
 function getDb(): DatabaseSchema {
   try {
     if (!fs.existsSync(DB_FILE_PATH)) {
-      const initial: DatabaseSchema = { orders: {} };
-      fs.mkdirSync(path.dirname(DB_FILE_PATH), { recursive: true });
-      fs.writeFileSync(DB_FILE_PATH, JSON.stringify(initial, null, 2), 'utf-8');
-      return initial;
+      try {
+        fs.mkdirSync(path.dirname(DB_FILE_PATH), { recursive: true });
+        fs.writeFileSync(DB_FILE_PATH, JSON.stringify(inMemoryDb, null, 2), 'utf-8');
+      } catch {
+        // Fallback to in-memory if filesystem is read-only
+      }
+      return inMemoryDb;
     }
     const raw = fs.readFileSync(DB_FILE_PATH, 'utf-8');
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    inMemoryDb = { orders: { ...inMemoryDb.orders, ...parsed.orders } };
+    return inMemoryDb;
   } catch (err) {
-    console.error('[DB ERROR] Failed reading orders.json:', err);
-    return { orders: {} };
+    console.warn('[DB WARNING] Operating with in-memory DB fallback:', err);
+    return inMemoryDb;
   }
 }
 
 function saveDb(data: DatabaseSchema): void {
+  inMemoryDb = data;
   try {
     fs.mkdirSync(path.dirname(DB_FILE_PATH), { recursive: true });
     fs.writeFileSync(DB_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
   } catch (err) {
-    console.error('[DB ERROR] Failed saving orders.json:', err);
+    console.warn('[DB WARNING] Failed writing to disk, preserved in memory:', err);
   }
 }
 

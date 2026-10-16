@@ -203,6 +203,7 @@ export async function handleCreateCheckoutSession(reqBody: any, origin: string) 
     return {
       status: 200,
       body: {
+        success: true,
         url: session.url,
         sessionId: session.id,
         orderId

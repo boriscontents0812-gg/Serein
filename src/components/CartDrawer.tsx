@@ -55,12 +55,49 @@ export const CartDrawer: React.FC = () => {
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
+      // Safely parse JSON or handle non-JSON responses (e.g. 404/500 text pages)
+      const contentType = response.headers.get('content-type') || '';
+      let data: any = null;
 
-      if (!response.ok || !data.success) {
-        const errorMsg = data.message || 'Unable to initialize checkout. Please try again.';
+      if (contentType.includes('application/json')) {
+        try {
+          data = await response.json();
+        } catch {
+          data = null;
+        }
+      }
+
+      if (!data) {
+        // Fallback for non-JSON responses
+        if (response.status === 404) {
+          setCheckoutError(
+            'The checkout endpoint (/api/create-checkout-session) could not be reached. Ensure serverless functions or the backend server are running.'
+          );
+        } else {
+          setCheckoutError(
+            'Unable to connect to the checkout service. Please try again in a few moments.'
+          );
+        }
+        setIsSetupHelpOpen(true);
+        setIsCheckingOut(false);
+        return;
+      }
+
+      // Check for backend error responses
+      if (!response.ok || data.error || !data.url) {
+        const errorMsg =
+          data.error ||
+          data.message ||
+          'Unable to initialize checkout. Please check payment provider settings.';
         setCheckoutError(errorMsg);
-        if (data.isConfigError || data.missingKey) {
+
+        if (
+          data.isSetupRequired ||
+          data.code === 'STRIPE_NOT_CONFIGURED' ||
+          data.code === 'PRICE_NOT_CONFIGURED' ||
+          data.isConfigError ||
+          data.missingKey
+        ) {
           setIsSetupHelpOpen(true);
         }
         setIsCheckingOut(false);
@@ -75,9 +112,18 @@ export const CartDrawer: React.FC = () => {
       }
     } catch (err: any) {
       console.error('[CHECKOUT INITIATION FAILED]', err);
+      const isSyntaxOrNetwork =
+        err instanceof SyntaxError ||
+        err.message?.includes('JSON') ||
+        err.message?.includes('token') ||
+        err.message?.includes('fetch');
+
       setCheckoutError(
-        err.message || 'A network error occurred while connecting to the checkout service. Please try again.'
+        isSyntaxOrNetwork
+          ? 'Unable to connect to the checkout service. Please ensure the backend server is running.'
+          : (err.message || 'A network error occurred while connecting to checkout. Please try again.')
       );
+      setIsSetupHelpOpen(true);
       setIsCheckingOut(false);
     }
   };
