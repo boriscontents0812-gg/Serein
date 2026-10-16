@@ -9,10 +9,10 @@ const STORAGE_KEY = 'serein_shopify_config';
 
 // Default configuration with fallbacks
 export const DEFAULT_SHOPIFY_CONFIG: ShopifyConfig = {
-  storeDomain: ((import.meta as any).env?.VITE_SHOPIFY_STORE_DOMAIN || 'serein.myshopify.com')
+  storeDomain: ((import.meta as any).env?.VITE_SHOPIFY_STORE_DOMAIN || 'f0jzb7-r0.myshopify.com')
     .replace(/^https?:\/\//, '')
     .replace(/\/$/, ''),
-  variantId: (import.meta as any).env?.VITE_SHOPIFY_VARIANT_ID || '44812345678901',
+  variantId: (import.meta as any).env?.VITE_SHOPIFY_VARIANT_ID || '51592955855122',
 };
 
 export function getShopifyConfig(): ShopifyConfig {
