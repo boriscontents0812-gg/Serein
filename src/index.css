@@ -1,0 +1,231 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "DLYP";
+  src: url("/fonts/DLYP-SansText.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SerifDisplay";
+  src: url("/fonts/DLYP-SerifDisplay.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DLYP-Serif";
+  src: url("/fonts/DLYP-Serif.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Default theme: White / Light Mode */
+  html:not(.dark) {
+    background-color: #F5F6F8;
+    color: #111827;
+  }
+
+  /* Dark theme */
+  html.dark {
+    background-color: #0A0D0F;
+    color: #F4F1EB;
+  }
+
+  body {
+    font-family: "DLYP", system-ui, -apple-system, sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    min-height: 100vh;
+  }
+
+  button, input, optgroup, select, textarea {
+    font-family: inherit;
+  }
+
+  /* Refined Scrollbars */
+  html:not(.dark) ::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
+  html:not(.dark) ::-webkit-scrollbar-track {
+    background: #F0F2F5;
+  }
+  html:not(.dark) ::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 9999px;
+  }
+  html:not(.dark) ::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
+  }
+
+  html.dark ::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
+  html.dark ::-webkit-scrollbar-track {
+    background: #0E1316;
+  }
+  html.dark ::-webkit-scrollbar-thumb {
+    background: #243036;
+    border-radius: 9999px;
+  }
+  html.dark ::-webkit-scrollbar-thumb:hover {
+    background: #3B4D56;
+  }
+
+  /* Accessible focus ring */
+  :focus-visible {
+    outline: 2px solid #25B6A7;
+    outline-offset: 2px;
+  }
+}
+
+/* Kree8-inspired Soft Clay Components */
+@layer components {
+  /* Floating Clay Card */
+  .clay-card {
+    @apply transition-all duration-300 ease-out;
+    background-color: #FFFFFF;
+    border: 1px solid #E5E8EC;
+    box-shadow: 0px 1.67px 4.18px rgba(181, 186, 203, 0.28),
+                0px 17.57px 10.88px rgba(181, 187, 203, 0.14),
+                0px 31.8px 12.55px rgba(181, 187, 203, 0.05),
+                inset 0px 1px 0px rgba(255, 255, 255, 0.9);
+  }
+
+  .dark .clay-card {
+    background-color: #141A1D;
+    border: 1px solid #222D33;
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.5),
+                0px 16px 36px rgba(0, 0, 0, 0.35),
+                inset 0px 1px 0px rgba(255, 255, 255, 0.08);
+  }
+
+  /* Tactile Teal Pill Button */
+  .btn-clay-teal {
+    @apply inline-flex items-center justify-center font-medium rounded-full transition-all duration-200 cursor-pointer select-none active:scale-[0.98];
+    background: linear-gradient(180deg, #2ED6C4 0%, #25B6A7 100%);
+    color: #FFFFFF;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow: 0px 2px 4px rgba(37, 182, 167, 0.25),
+                0px 10px 20px rgba(37, 182, 167, 0.22),
+                inset 0px 1px 1px rgba(255, 255, 255, 0.45);
+  }
+  .btn-clay-teal:hover {
+    transform: translateY(-2px);
+    box-shadow: 0px 4px 8px rgba(37, 182, 167, 0.32),
+                0px 14px 26px rgba(37, 182, 167, 0.28),
+                inset 0px 1px 1px rgba(255, 255, 255, 0.55);
+  }
+
+  /* Tactile Dark / Black Pill Button */
+  .btn-clay-dark {
+    @apply inline-flex items-center justify-center font-medium rounded-full transition-all duration-200 cursor-pointer select-none active:scale-[0.98];
+    background-color: #111827;
+    color: #FFFFFF;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.25),
+                0px 12px 24px rgba(0, 0, 0, 0.18),
+                inset 0px 1px 0px rgba(255, 255, 255, 0.2);
+  }
+  .btn-clay-dark:hover {
+    transform: translateY(-2px);
+    background-color: #1F2937;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.35),
+                0px 16px 30px rgba(0, 0, 0, 0.25),
+                inset 0px 1px 0px rgba(255, 255, 255, 0.3);
+  }
+
+  .dark .btn-clay-dark {
+    background-color: #FFFFFF;
+    color: #0A0D0F;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.4),
+                0px 12px 24px rgba(0, 0, 0, 0.3);
+  }
+  .dark .btn-clay-dark:hover {
+    background-color: #E2E8F0;
+  }
+
+  /* Tactile White / Light Pill Button */
+  .btn-clay-white {
+    @apply inline-flex items-center justify-center font-medium rounded-full transition-all duration-200 cursor-pointer select-none active:scale-[0.98];
+    background-color: #FFFFFF;
+    color: #111827;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0px 1.67px 4.18px rgba(181, 186, 203, 0.31),
+                0px 17.57px 10.88px rgba(181, 187, 203, 0.16),
+                0px 31.8px 12.55px rgba(181, 187, 203, 0.05),
+                inset 0px 7px 24px rgba(255, 255, 255, 0.9);
+  }
+  .btn-clay-white:hover {
+    transform: translateY(-2px);
+    box-shadow: 0px 3px 6px rgba(181, 186, 203, 0.35),
+                0px 20px 14px rgba(181, 187, 203, 0.22);
+  }
+
+  .dark .btn-clay-white {
+    background-color: #1A2227;
+    color: #F4F1EB;
+    border: 1px solid #2B383F;
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.4),
+                inset 0px 1px 0px rgba(255, 255, 255, 0.06);
+  }
+  .dark .btn-clay-white:hover {
+    background-color: #222C33;
+  }
+
+  /* Micro Badge / Pill Tag */
+  .clay-pill-tag {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-transform duration-200;
+    background-color: #F0F2F5;
+    color: #304F67;
+    border: 1px solid #E2E6EA;
+  }
+  .dark .clay-pill-tag {
+    background-color: #182126;
+    color: #94A3B8;
+    border: 1px solid #243036;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes floatGentle {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-drawer-in {
+  animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-float {
+  animation: floatGentle 4s ease-in-out infinite;
+}

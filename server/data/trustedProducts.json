@@ -1,0 +1,19 @@
+{
+  "products": {
+    "serein-curl-set-teal": {
+      "id": "serein-curl-set-teal",
+      "name": "The Serein Heatless Curl Set",
+      "subtitle": "Extra-long 60-inch curling rod and accessories",
+      "description": "Extra-long 60-inch teal velvet curling rod with 2 matching scrunchies, 1 matte claw clip, and velvet storage pouch.",
+      "price": 48.00,
+      "currency": "usd",
+      "active": true,
+      "images": [
+        "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&auto=format&fit=crop"
+      ],
+      "packageDetails": "Includes 60-inch teal velvet rod, 2 matching scrunchies, 1 matte hair claw clip, 1 velvet travel pouch.",
+      "taxCode": "txcd_99999999"
+    }
+  },
+  "defaultCurrency": "usd"
+}

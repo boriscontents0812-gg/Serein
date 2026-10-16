@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Font Comparison</title>
+<style>
+  @font-face {
+    font-family: "DLYP";
+    src: url("/fonts/DLYP-SansText.woff2") format("woff2");
+    font-weight: 400;
+  }
+  @font-face {
+    font-family: "SerifDisplay";
+    src: url("/fonts/DLYP-SerifDisplay.woff2") format("woff2");
+    font-weight: 400;
+  }
+  @font-face {
+    font-family: "DLYP-Serif";
+    src: url("/fonts/DLYP-Serif.woff2") format("woff2");
+    font-weight: 400;
+  }
+  body {
+    background: #FFFFFF;
+    color: #000000;
+    padding: 40px;
+  }
+  .box {
+    margin-bottom: 40px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid #E3E1E1;
+  }
+  .dlyp-title {
+    font-family: "DLYP", sans-serif;
+    font-size: 32px;
+    line-height: 38px;
+    letter-spacing: -1.2px;
+    text-transform: uppercase;
+    font-weight: 400;
+  }
+  .serif-title {
+    font-family: "SerifDisplay", serif;
+    font-size: 32px;
+    line-height: 38px;
+    letter-spacing: -0.5px;
+    text-transform: uppercase;
+    font-weight: 400;
+  }
+  .serif-quote {
+    font-family: "SerifDisplay", serif;
+    font-size: 24px;
+    line-height: 32px;
+    font-style: italic;
+  }
+  .dlyp-nav {
+    font-family: "DLYP", sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .dlyp-logo {
+    font-family: "DLYP", sans-serif;
+    font-size: 26px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="dlyp-logo">SEREIN</div>
+    <p>Logo in DLYP (letter-spacing: 0.28em)</p>
+  </div>
+
+  <div class="box">
+    <div class="dlyp-title">THE SEREIN HEATLESS CURL SET</div>
+    <p>Product Title in DLYP (Deadly Ponies exact PDP style: letter-spacing: -1.2px, uppercase)</p>
+  </div>
+
+  <div class="box">
+    <div class="serif-title">THE SEREIN HEATLESS CURL SET</div>
+    <p>Product Title in SerifDisplay (Deadly Ponies SerifDisplay)</p>
+  </div>
+
+  <div class="box">
+    <div class="serif-quote">"Beauty doesn't need to be loud to be transformative. When we remove heat from our routine, we make room for ease."</div>
+    <p>Quote in SerifDisplay</p>
+  </div>
+
+  <div class="box">
+    <div class="dlyp-nav">SHOP &nbsp; HOW IT WORKS &nbsp; OUR STORY &nbsp; FAQ</div>
+    <p>Nav in DLYP</p>
+  </div>
+</body>
+</html>
