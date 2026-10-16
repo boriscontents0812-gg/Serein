@@ -20,6 +20,9 @@ interface CartContextType {
   setIsPriceEditing: (val: boolean) => void;
   checkoutNotice: string | null;
   setCheckoutNotice: (val: string | null) => void;
+  isCheckoutView: boolean;
+  openCheckout: () => void;
+  closeCheckout: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -45,6 +48,47 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   });
   const [isPriceEditing, setIsPriceEditing] = useState(false);
+  const [isCheckoutView, setIsCheckoutView] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.location.hash === '#checkout' || window.location.pathname === '/checkout';
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const handleHash = () => {
+      if (window.location.hash === '#checkout' || window.location.pathname === '/checkout') {
+        setIsCheckoutView(true);
+      } else {
+        setIsCheckoutView(false);
+      }
+    };
+    window.addEventListener('hashchange', handleHash);
+    window.addEventListener('popstate', handleHash);
+    return () => {
+      window.removeEventListener('hashchange', handleHash);
+      window.removeEventListener('popstate', handleHash);
+    };
+  }, []);
+
+  const openCheckout = () => {
+    setIsCartOpen(false);
+    setIsCheckoutView(true);
+    if (typeof window !== 'undefined') {
+      window.location.hash = '#checkout';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const closeCheckout = () => {
+    setIsCheckoutView(false);
+    if (typeof window !== 'undefined') {
+      if (window.location.hash === '#checkout') {
+        history.pushState('', document.title, window.location.pathname + window.location.search);
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   useEffect(() => {
     try {
@@ -140,6 +184,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsPriceEditing,
         checkoutNotice,
         setCheckoutNotice,
+        isCheckoutView,
+        openCheckout,
+        closeCheckout,
       }}
     >
       {children}

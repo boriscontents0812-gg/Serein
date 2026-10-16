@@ -13,9 +13,10 @@ import { Footer } from './components/Footer';
 import { CartDrawer } from './components/CartDrawer';
 import { StickyAddToCartBar } from './components/StickyAddToCartBar';
 import { OrderConfirmationModal } from './components/OrderConfirmationModal';
+import { CheckoutSection } from './components/CheckoutSection';
 
 const StoreContent: React.FC = () => {
-  const { openCart, setCheckoutNotice, clearCart } = useCart();
+  const { openCart, setCheckoutNotice, clearCart, isCheckoutView } = useCart();
   const [confirmedSessionId, setConfirmedSessionId] = useState<string | null>(null);
 
   // Handle return from Stripe Checkout (success or cancelled)
@@ -46,6 +47,21 @@ const StoreContent: React.FC = () => {
     }
   }, [openCart, setCheckoutNotice, clearCart]);
 
+  // If in dedicated checkout view (matching reference video)
+  if (isCheckoutView) {
+    return (
+      <div className="min-h-screen bg-[#0A0B0E] text-white flex flex-col font-sans transition-colors duration-300 selection:bg-[#EAA858] selection:text-black">
+        <CheckoutSection onSuccessOrder={(id) => setConfirmedSessionId(id)} />
+        {confirmedSessionId && (
+          <OrderConfirmationModal
+            sessionId={confirmedSessionId}
+            onClose={() => setConfirmedSessionId(null)}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0A0B0E] text-white flex flex-col font-sans transition-colors duration-300 selection:bg-[#EAA858] selection:text-black">
       {/* Slim Announcement Bar */}
@@ -73,6 +89,9 @@ const StoreContent: React.FC = () => {
 
         {/* Accessible FAQ Disclosures */}
         <FAQAccordion />
+
+        {/* Checkout Section matching video reference */}
+        <CheckoutSection onSuccessOrder={(id) => setConfirmedSessionId(id)} />
       </main>
 
       {/* Footer with brand story and newsletter */}

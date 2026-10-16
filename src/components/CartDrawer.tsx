@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useCart } from '../context/CartContext';
-import { X, Minus, Plus, ShoppingBag, ArrowRight, Trash2, Lock, ShieldCheck, AlertCircle, Loader2, Info } from 'lucide-react';
+import { X, Minus, Plus, ShoppingBag, ArrowRight, Trash2, Lock, ShieldCheck, AlertCircle, Info } from 'lucide-react';
 
 export const CartDrawer: React.FC = () => {
   const {
@@ -13,9 +13,9 @@ export const CartDrawer: React.FC = () => {
     closeCart,
     checkoutNotice,
     setCheckoutNotice,
+    openCheckout,
   } = useCart();
 
-  const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [isSetupHelpOpen, setIsSetupHelpOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -28,104 +28,11 @@ export const CartDrawer: React.FC = () => {
     }
   }, [isCartOpen]);
 
-  // Real Checkout Handler
-  const handleProceedToCheckout = async () => {
-    if (items.length === 0 || isCheckingOut) return;
-
-    setIsCheckingOut(true);
-    setCheckoutError(null);
-    setIsSetupHelpOpen(false);
-
-    try {
-      // 1. Prepare secure payload containing only product IDs and requested quantities
-      const payload = {
-        items: items.map((item) => ({
-          id: item.id,
-          quantity: item.quantity,
-        })),
-        customerEmail: undefined,
-      };
-
-      // 2. Request real Stripe Checkout Session from backend
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      // Safely parse JSON or handle non-JSON responses (e.g. 404/500 text pages)
-      const contentType = response.headers.get('content-type') || '';
-      let data: any = null;
-
-      if (contentType.includes('application/json')) {
-        try {
-          data = await response.json();
-        } catch {
-          data = null;
-        }
-      }
-
-      if (!data) {
-        // Fallback for non-JSON responses
-        if (response.status === 404) {
-          setCheckoutError(
-            'The checkout endpoint (/api/create-checkout-session) could not be reached. Ensure serverless functions or the backend server are running.'
-          );
-        } else {
-          setCheckoutError(
-            'Unable to connect to the checkout service. Please try again in a few moments.'
-          );
-        }
-        setIsSetupHelpOpen(true);
-        setIsCheckingOut(false);
-        return;
-      }
-
-      // Check for backend error responses
-      if (!response.ok || data.error || !data.url) {
-        const errorMsg =
-          data.error ||
-          data.message ||
-          'Unable to initialize checkout. Please check payment provider settings.';
-        setCheckoutError(errorMsg);
-
-        if (
-          data.isSetupRequired ||
-          data.code === 'STRIPE_NOT_CONFIGURED' ||
-          data.code === 'PRICE_NOT_CONFIGURED' ||
-          data.isConfigError ||
-          data.missingKey
-        ) {
-          setIsSetupHelpOpen(true);
-        }
-        setIsCheckingOut(false);
-        return;
-      }
-
-      // 3. Redirect to Stripe Checkout
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error('Checkout URL was not returned by server.');
-      }
-    } catch (err: any) {
-      console.error('[CHECKOUT INITIATION FAILED]', err);
-      const isSyntaxOrNetwork =
-        err instanceof SyntaxError ||
-        err.message?.includes('JSON') ||
-        err.message?.includes('token') ||
-        err.message?.includes('fetch');
-
-      setCheckoutError(
-        isSyntaxOrNetwork
-          ? 'Unable to connect to the checkout service. Please ensure the backend server is running.'
-          : (err.message || 'A network error occurred while connecting to checkout. Please try again.')
-      );
-      setIsSetupHelpOpen(true);
-      setIsCheckingOut(false);
-    }
+  // Transition to dedicated Checkout Section
+  const handleProceedToCheckout = () => {
+    if (items.length === 0) return;
+    closeCart();
+    openCheckout();
   };
 
   // Close drawer on Escape key
@@ -329,24 +236,15 @@ export const CartDrawer: React.FC = () => {
 
             <button
               onClick={handleProceedToCheckout}
-              disabled={isCheckingOut || items.length === 0}
+              disabled={items.length === 0}
               className={`w-full py-3.5 font-bold text-xs tracking-[0.2em] uppercase rounded-full flex items-center justify-center space-x-2 transition-all cursor-pointer ${
-                isCheckingOut || items.length === 0
+                items.length === 0
                   ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
                   : 'btn-amber shadow-lg shadow-amber-500/10'
               }`}
             >
-              {isCheckingOut ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
-                  <span>Securing Session...</span>
-                </>
-              ) : (
-                <>
-                  <span>PROCEED TO CHECKOUT</span>
-                  <ArrowRight className="w-4 h-4 text-black" />
-                </>
-              )}
+              <span>PROCEED TO CHECKOUT</span>
+              <ArrowRight className="w-4 h-4 text-black" />
             </button>
 
             <div className="flex items-center justify-center space-x-3 text-[10px] text-neutral-500 pt-1">
