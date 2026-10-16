@@ -17,14 +17,12 @@ export const CartDrawer: React.FC = () => {
   } = useCart();
 
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [isSetupHelpOpen, setIsSetupHelpOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
 
   // Clear transient error when drawer is closed or items change
   useEffect(() => {
     if (!isCartOpen) {
       setCheckoutError(null);
-      setIsSetupHelpOpen(false);
     }
   }, [isCartOpen]);
 
@@ -223,14 +221,6 @@ export const CartDrawer: React.FC = () => {
                   <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
                   <p className="font-light leading-relaxed">{checkoutError}</p>
                 </div>
-                {isSetupHelpOpen && (
-                  <div className="pt-2 border-t border-red-800/60 text-[11px] text-red-300">
-                    <p className="font-semibold uppercase tracking-wider mb-0.5">Store Setup Action:</p>
-                    <p className="font-light">
-                      Add a valid <code className="bg-black/50 px-1 py-0.5 rounded border border-red-800 font-mono">STRIPE_SECRET_KEY</code> to your project's <code className="font-mono">.env</code> file.
-                    </p>
-                  </div>
-                )}
               </div>
             )}
 

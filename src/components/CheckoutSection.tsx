@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { productData } from '../data/product';
-import { ArrowLeft, Lock, ShieldCheck, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
+import { getShopifyConfig, saveShopifyConfig, buildShopifyCheckoutUrl, ShopifyConfig } from '../data/shopifyConfig';
+import { ArrowLeft, Lock, ShieldCheck, CheckCircle2, Settings2, X, Store } from 'lucide-react';
 
 interface CheckoutSectionProps {
   onSuccessOrder?: (sessionId: string) => void;
@@ -9,6 +10,13 @@ interface CheckoutSectionProps {
 
 export const CheckoutSection: React.FC<CheckoutSectionProps> = ({ onSuccessOrder }) => {
   const { items, subtotal, retailPrice, addItem, closeCheckout, clearCart } = useCart();
+
+  // Shopify store configuration state
+  const [shopifyConfig, setShopifyConfigState] = useState<ShopifyConfig>(getShopifyConfig);
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [tempDomain, setTempDomain] = useState(shopifyConfig.storeDomain);
+  const [tempVariantId, setTempVariantId] = useState(shopifyConfig.variantId);
+  const [configSavedNotice, setConfigSavedNotice] = useState(false);
 
   // Form states matching video
   const [email, setEmail] = useState('');
@@ -24,7 +32,6 @@ export const CheckoutSection: React.FC<CheckoutSectionProps> = ({ onSuccessOrder
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isSetupHelpOpen, setIsSetupHelpOpen] = useState(false);
 
   // If cart is empty, use 1 default product item for display & purchase
   const effectiveItems = items.length > 0 ? items : [
@@ -42,6 +49,21 @@ export const CheckoutSection: React.FC<CheckoutSectionProps> = ({ onSuccessOrder
 
   const effectiveTotal = items.length > 0 ? subtotal : retailPrice;
 
+  const handleSaveConfig = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newConfig: ShopifyConfig = {
+      storeDomain: tempDomain.trim().replace(/^https?:\/\//, '').replace(/\/$/, ''),
+      variantId: tempVariantId.trim(),
+    };
+    saveShopifyConfig(newConfig);
+    setShopifyConfigState(newConfig);
+    setConfigSavedNotice(true);
+    setTimeout(() => {
+      setConfigSavedNotice(false);
+      setIsConfigModalOpen(false);
+    }, 1000);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isProcessing) return;
@@ -58,98 +80,55 @@ export const CheckoutSection: React.FC<CheckoutSectionProps> = ({ onSuccessOrder
 
     setIsProcessing(true);
     setErrorMessage(null);
-    setIsSetupHelpOpen(false);
 
     try {
-      // If cart was empty, add the default item first
       if (items.length === 0) {
         addItem(1);
       }
 
-      const payload = {
+      // Build native Shopify Checkout URL with pre-filled customer details
+      const shopifyUrl = buildShopifyCheckoutUrl({
+        storeDomain: shopifyConfig.storeDomain,
         items: effectiveItems.map((item) => ({
-          id: item.id,
+          variantId: shopifyConfig.variantId,
           quantity: item.quantity,
         })),
-        customerEmail: email,
-        customerName: `${firstName} ${lastName}`.trim(),
-        shippingAddress: {
-          line1: address,
-          line2: apartment || undefined,
-          city,
-          state,
-          postal_code: postalCode,
-          country,
-        },
-      };
-
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        email,
+        firstName,
+        lastName,
+        address,
+        apartment,
+        city,
+        province: state,
+        country,
+        postalCode,
+        phone,
       });
 
-      const contentType = response.headers.get('content-type') || '';
-      let data: any = null;
+      // Clear local cart
+      clearCart();
 
-      if (contentType.includes('application/json')) {
-        try {
-          data = await response.json();
-        } catch {
-          data = null;
-        }
-      }
-
-      if (!data) {
-        if (response.status === 404) {
-          setErrorMessage(
-            'The checkout endpoint (/api/create-checkout-session) could not be reached. Ensure backend or serverless functions are deployed.'
-          );
-        } else {
-          setErrorMessage('Unable to connect to the checkout service. Please try again.');
-        }
-        setIsSetupHelpOpen(true);
-        setIsProcessing(false);
-        return;
-      }
-
-      if (!response.ok || data.error || !data.url) {
-        const err = data.error || data.message || 'Unable to initialize checkout. Please check configuration.';
-        setErrorMessage(err);
-
-        if (
-          data.isSetupRequired ||
-          data.code === 'STRIPE_NOT_CONFIGURED' ||
-          data.code === 'PRICE_NOT_CONFIGURED'
-        ) {
-          setIsSetupHelpOpen(true);
-        }
-        setIsProcessing(false);
-        return;
-      }
-
-      // Redirect to real Stripe Checkout Session
-      window.location.href = data.url;
+      // Redirect immediately to Shopify's high-converting checkout!
+      window.location.href = shopifyUrl;
     } catch (err: any) {
-      console.error('[CHECKOUT FORM ERROR]', err);
-      setErrorMessage('A network error occurred while connecting to the payment service.');
-      setIsSetupHelpOpen(true);
+      console.error('[SHOPIFY CHECKOUT ERROR]', err);
+      setErrorMessage('Failed to generate Shopify checkout link. Please verify store settings.');
       setIsProcessing(false);
     }
   };
 
-  // Test simulation completion when Stripe secret key has not been added
+  // Test simulation completion for local testing without redirecting
   const handleSimulateTestOrder = () => {
     setIsProcessing(true);
     setTimeout(() => {
       clearCart();
-      const mockSessionId = `test_sess_${Date.now()}`;
+      const mockSessionId = `shopify_ord_${Date.now()}`;
       if (onSuccessOrder) {
         onSuccessOrder(mockSessionId);
       } else {
         window.location.href = `/?success=true&session_id=${mockSessionId}`;
       }
-    }, 800);
+    }, 600);
   };
 
   return (
@@ -166,9 +145,24 @@ export const CheckoutSection: React.FC<CheckoutSectionProps> = ({ onSuccessOrder
             <span>Back to store</span>
           </button>
 
-          <span className="font-sans font-bold text-base sm:text-lg tracking-[0.25em] uppercase text-white">
-            SEREIN
-          </span>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setIsConfigModalOpen(true)}
+              type="button"
+              className="flex items-center space-x-1.5 text-[11px] text-neutral-400 hover:text-[#25B6A7] transition-colors px-2.5 py-1 rounded-full bg-white/5 border border-white/10 hover:border-[#25B6A7]/40 cursor-pointer"
+              title="Configure Shopify store domain & product variant ID"
+            >
+              <Store className="w-3.5 h-3.5 text-[#25B6A7]" />
+              <span className="hidden sm:inline font-mono text-[10px]">
+                {shopifyConfig.storeDomain}
+              </span>
+              <Settings2 className="w-3 h-3 text-neutral-400" />
+            </button>
+
+            <span className="font-sans font-bold text-base sm:text-lg tracking-[0.25em] uppercase text-white">
+              SEREIN
+            </span>
+          </div>
         </div>
       </header>
 
@@ -182,9 +176,16 @@ export const CheckoutSection: React.FC<CheckoutSectionProps> = ({ onSuccessOrder
               <h1 className="font-serif text-3xl sm:text-4xl text-white font-medium tracking-tight mb-2">
                 Checkout
               </h1>
-              <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed">
-                Secure checkout powered by Stripe. Charged directly in USD.
-              </p>
+              <div className="flex items-center space-x-2 text-xs sm:text-sm text-neutral-400">
+                <span>Direct Shopify Checkout. Charged in USD.</span>
+                <button
+                  type="button"
+                  onClick={() => setIsConfigModalOpen(true)}
+                  className="text-[#25B6A7] hover:underline flex items-center space-x-1 cursor-pointer font-medium"
+                >
+                  <span>Edit Shopify Store</span>
+                </button>
+              </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
@@ -351,69 +352,44 @@ export const CheckoutSection: React.FC<CheckoutSectionProps> = ({ onSuccessOrder
                 </div>
               </div>
 
-              {/* Error & Store Setup Alert */}
+              {/* Error Message */}
               {errorMessage && (
-                <div className="bg-red-950/40 border border-red-900/60 p-4 rounded-2xl text-xs text-red-300 space-y-3 animate-fade-in shadow-sm">
-                  <div className="flex items-start space-x-2.5">
-                    <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-                    <p className="font-light leading-relaxed">{errorMessage}</p>
-                  </div>
-
-                  {isSetupHelpOpen && (
-                    <div className="pt-3 border-t border-red-900/40 space-y-3">
-                      <div>
-                        <p className="font-semibold uppercase tracking-wider text-[11px] mb-1">
-                          Live Stripe Setup:
-                        </p>
-                        <p className="font-light text-[11px] leading-relaxed">
-                          Add your valid <code className="bg-black/50 px-1 py-0.5 rounded border border-red-800 font-mono">STRIPE_SECRET_KEY</code> to your environment or Vercel dashboard.
-                        </p>
-                      </div>
-
-                      <div className="pt-1">
-                        <button
-                          type="button"
-                          onClick={handleSimulateTestOrder}
-                          className="w-full py-2.5 px-4 bg-emerald-950/60 border border-emerald-700/60 hover:bg-emerald-900/60 text-emerald-200 rounded-xl text-xs font-semibold flex items-center justify-center space-x-2 transition-colors cursor-pointer"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Simulate Test Order Success (Demo Mode)</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                <div className="bg-red-950/40 border border-red-900/60 p-4 rounded-2xl text-xs text-red-300 space-y-2 animate-fade-in shadow-sm">
+                  <p className="font-light leading-relaxed">{errorMessage}</p>
                 </div>
               )}
 
-              {/* Submit Pay Button matching video */}
+              {/* Submit Pay Button with Shopify */}
               <button
                 type="submit"
                 disabled={isProcessing}
                 className="w-full py-4 rounded-full btn-amber text-black font-bold text-xs sm:text-sm tracking-[0.2em] uppercase flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-lg shadow-amber-500/10 hover:shadow-amber-500/20"
               >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
-                    <span>Connecting to Stripe...</span>
-                  </>
-                ) : (
-                  <>
-                    <Lock className="w-4 h-4 text-black stroke-[2.2]" />
-                    <span>Pay ${effectiveTotal.toFixed(2)}</span>
-                  </>
-                )}
+                <Lock className="w-4 h-4 text-black stroke-[2.2]" />
+                <span>Pay ${effectiveTotal.toFixed(2)} with Shopify</span>
               </button>
+
+              {/* Demo Mode trigger */}
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={handleSimulateTestOrder}
+                  className="text-[11px] text-neutral-400 hover:text-white transition-colors underline cursor-pointer"
+                >
+                  Preview Order Confirmation Screen (Demo)
+                </button>
+              </div>
 
               {/* Trust assurances */}
               <div className="flex items-center justify-center space-x-4 text-[11px] text-neutral-500 pt-1">
                 <span className="flex items-center space-x-1.5">
                   <Lock className="w-3 h-3 text-[#EAA858]" />
-                  <span>256-Bit Encrypted</span>
+                  <span>Shopify Secure Checkout</span>
                 </span>
                 <span>·</span>
                 <span className="flex items-center space-x-1.5">
                   <ShieldCheck className="w-3 h-3 text-[#25B6A7]" />
-                  <span>30-Day Guarantee</span>
+                  <span>Shop Pay & Cards</span>
                 </span>
                 <span>·</span>
                 <span>Complimentary Delivery</span>
@@ -424,9 +400,14 @@ export const CheckoutSection: React.FC<CheckoutSectionProps> = ({ onSuccessOrder
           {/* Right Column: Order Summary Card (matching getbreeze.live 1:1) */}
           <div className="lg:col-span-5 lg:sticky lg:top-24">
             <div className="bg-[#121518] border border-[#1E2529] rounded-3xl p-6 sm:p-7 shadow-2xl space-y-6">
-              <h2 className="font-sans text-base sm:text-lg font-bold text-white tracking-wide">
-                Order summary
-              </h2>
+              <div className="flex items-center justify-between">
+                <h2 className="font-sans text-base sm:text-lg font-bold text-white tracking-wide">
+                  Order summary
+                </h2>
+                <span className="text-[11px] font-mono text-[#25B6A7] bg-[#25B6A7]/10 px-2 py-0.5 rounded-full border border-[#25B6A7]/20">
+                  Shopify Checkout
+                </span>
+              </div>
 
               {/* Product item display */}
               <div className="space-y-4">
@@ -483,13 +464,102 @@ export const CheckoutSection: React.FC<CheckoutSectionProps> = ({ onSuccessOrder
 
               {/* Microcopy disclaimer */}
               <p className="text-[11px] text-neutral-500 font-light leading-relaxed pt-2 border-t border-white/5">
-                Prices are in USD and your card is charged in USD — no currency conversion is applied by us.
+                Prices are in USD and your order is processed securely through Shopify Checkout.
               </p>
             </div>
           </div>
 
         </div>
       </main>
+
+      {/* Shopify Connection Configuration Modal */}
+      {isConfigModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-fade-in">
+          <div className="w-full max-w-lg bg-[#121518] border border-[#1E2529] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-white relative">
+            <button
+              onClick={() => setIsConfigModalOpen(false)}
+              className="absolute top-5 right-5 text-neutral-400 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="space-y-1">
+              <div className="flex items-center space-x-2 text-[#25B6A7] text-xs font-semibold uppercase tracking-wider">
+                <Store className="w-4 h-4" />
+                <span>Shopify Integration</span>
+              </div>
+              <h3 className="font-sans text-xl font-bold text-white">
+                Connect Your Shopify Store
+              </h3>
+              <p className="text-xs text-neutral-400 leading-relaxed">
+                Enter your Shopify store domain and product variant ID to route checkouts directly to your Shopify checkout.
+              </p>
+            </div>
+
+            <form onSubmit={handleSaveConfig} className="space-y-4">
+              <div>
+                <label className="block text-xs text-neutral-300 font-semibold mb-1">
+                  Shopify Store Domain
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="your-store.myshopify.com (or custom domain)"
+                  value={tempDomain}
+                  onChange={(e) => setTempDomain(e.target.value)}
+                  className="w-full bg-[#181D21] border border-[#252E34] focus:border-[#25B6A7] rounded-xl px-4 py-3 text-xs text-white outline-none font-mono"
+                />
+                <p className="text-[11px] text-neutral-500 mt-1">
+                  Example: <code className="text-neutral-400">serein.myshopify.com</code> or your live shop domain.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs text-neutral-300 font-semibold mb-1">
+                  Product Variant ID
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 44812345678901"
+                  value={tempVariantId}
+                  onChange={(e) => setTempVariantId(e.target.value)}
+                  className="w-full bg-[#181D21] border border-[#252E34] focus:border-[#25B6A7] rounded-xl px-4 py-3 text-xs text-white outline-none font-mono"
+                />
+                <div className="mt-2 p-3 bg-white/5 rounded-xl border border-white/5 text-[11px] text-neutral-400 space-y-1">
+                  <p className="font-semibold text-neutral-300">How to find your Variant ID in Shopify:</p>
+                  <p>1. Open your <strong>Shopify Admin</strong> → <strong>Products</strong>.</p>
+                  <p>2. Click on <strong>The Serein Heatless Curl Set</strong>.</p>
+                  <p>3. In the URL bar or variant list, copy the 14-digit number at the end.</p>
+                </div>
+              </div>
+
+              {configSavedNotice && (
+                <div className="flex items-center space-x-2 text-xs text-emerald-400 font-medium">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Shopify store settings saved successfully!</span>
+                </div>
+              )}
+
+              <div className="flex items-center space-x-3 pt-2">
+                <button
+                  type="submit"
+                  className="flex-1 py-3 bg-[#25B6A7] hover:bg-[#39CBBB] text-black font-bold text-xs uppercase tracking-wider rounded-xl transition-colors cursor-pointer"
+                >
+                  Save Connection
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsConfigModalOpen(false)}
+                  className="px-5 py-3 bg-[#181D21] hover:bg-[#20272B] text-neutral-300 text-xs font-semibold rounded-xl border border-white/10 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
