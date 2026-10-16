@@ -1,69 +1,68 @@
 import React from 'react';
-import { productData } from '../data/product';
-import { Sparkles, Ruler, Clock } from 'lucide-react';
+import { Waves, RotateCw, Sparkles, Zap } from 'lucide-react';
 
 export const BenefitsStrip: React.FC = () => {
-  const getIcon = (iconName: string) => {
-    switch (iconName) {
-      case 'Sparkles':
-        return <Sparkles className="w-5 h-5 text-teal stroke-[1.8]" />;
-      case 'Ruler':
-        return <Ruler className="w-5 h-5 text-teal stroke-[1.8]" />;
-      case 'Clock':
-        return <Clock className="w-5 h-5 text-teal stroke-[1.8]" />;
-      default:
-        return <Sparkles className="w-5 h-5 text-teal stroke-[1.8]" />;
-    }
-  };
+  const benefits = [
+    {
+      icon: Waves,
+      title: 'DEEP RELAXATION',
+      description: 'Gentle wrapping motion recreates effortless salon waves that help turn your daily routine into a moment of calm.',
+    },
+    {
+      icon: RotateCw,
+      title: '60" EXTRA-LONG',
+      description: 'Extra-long 60-inch rod accommodates all hair lengths and textures with effortless, full coverage.',
+    },
+    {
+      icon: Sparkles,
+      title: 'SOFT ON YOUR HAIR',
+      description: 'Plush velvet exterior glides smoothly through hair without creasing, tugging, or heat damage.',
+    },
+    {
+      icon: Zap,
+      title: 'USE IT ANYWHERE',
+      description: 'No cords, no hot tools, and compact enough to make heatless styling a seamless part of your daily routine.',
+    },
+  ];
 
   return (
-    <section className="w-full py-16 sm:py-24 bg-canvas-light dark:bg-canvas-dark border-b border-border-light dark:border-border-dark transition-colors duration-300">
+    <section id="benefits" className="w-full py-16 sm:py-24 bg-[#0A0B0E] border-b border-white/5 transition-colors duration-300">
       <div className="max-w-[1440px] mx-auto px-5 sm:px-8">
         
-        {/* Section label */}
-        <div className="text-center mb-12 sm:mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white dark:bg-[#141A1E] border border-border-light dark:border-border-dark text-[11px] font-semibold tracking-[0.2em] uppercase text-ink-lightMuted dark:text-ink-darkMuted shadow-sm mb-3">
-            <span>Thoughtful Design & Use</span>
-          </div>
-          <h2 className="font-sans text-2xl sm:text-3xl lg:text-4xl text-ink-light dark:text-ink-dark font-medium uppercase tracking-heading">
-            Built for a gentler cadence
+        {/* Section Header (Matching sec_05.png) */}
+        <div className="text-left mb-12 sm:mb-16">
+          <span className="text-xs font-semibold tracking-[0.25em] uppercase text-[#EAA858] block mb-3">
+            BENEFITS
+          </span>
+          <h2 className="font-sans text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight leading-tight">
+            More Than Just a Curling Rod.
           </h2>
         </div>
 
-        {/* Benefits 3-Card Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-          {productData.benefits.map((benefit, idx) => (
-            <div
-              key={benefit.title}
-              className="clay-card rounded-[24px] sm:rounded-[28px] p-7 sm:p-9 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 group cursor-default"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  {/* Icon container */}
-                  <div className="w-12 h-12 rounded-2xl bg-white dark:bg-[#182126] border border-border-light dark:border-border-dark flex items-center justify-center shadow-clay-sm group-hover:rotate-[-6deg] transition-transform duration-300">
-                    {getIcon(benefit.icon)}
-                  </div>
-                  {/* Number pill */}
-                  <span className="w-9 h-9 rounded-full bg-teal/10 dark:bg-teal/20 text-teal text-xs font-mono font-medium flex items-center justify-center border border-teal/20 shadow-sm group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">
-                    0{idx + 1}
-                  </span>
+        {/* Benefits 4-Card Grid (Matching video cards) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          {benefits.map((b) => {
+            const IconComponent = b.icon;
+            return (
+              <div
+                key={b.title}
+                className="video-dark-card p-7 sm:p-8 flex flex-col justify-start group cursor-default"
+              >
+                {/* Circular Badge with subtle amber accent icon */}
+                <div className="w-11 h-11 rounded-full bg-[#181D21] border border-[#263037] flex items-center justify-center text-[#EAA858] mb-6 group-hover:border-[#EAA858]/50 group-hover:scale-105 transition-all">
+                  <IconComponent className="w-5 h-5 stroke-[1.8]" />
                 </div>
 
-                <h3 className="font-sans text-lg font-medium text-ink-light dark:text-ink-dark uppercase tracking-tight mb-3">
-                  {benefit.title}
+                <h3 className="font-sans text-sm sm:text-base font-bold text-white uppercase tracking-wider mb-3">
+                  {b.title}
                 </h3>
 
-                <p className="text-xs sm:text-sm text-ink-lightMuted dark:text-ink-darkMuted font-light leading-relaxed">
-                  {benefit.description}
+                <p className="text-xs sm:text-sm text-neutral-400 font-normal leading-relaxed">
+                  {b.description}
                 </p>
               </div>
-
-              <div className="mt-8 pt-4 border-t border-border-light dark:border-border-dark flex items-center justify-between text-[11px] tracking-[0.18em] uppercase font-medium text-ink-lightSubtle dark:text-ink-darkSubtle">
-                <span>Serein Method</span>
-                <span className="text-teal group-hover:translate-x-1 transition-transform duration-200">✦</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
       </div>

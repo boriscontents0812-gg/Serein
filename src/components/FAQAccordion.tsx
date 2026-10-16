@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { productData } from '../data/product';
 import { FAQItem } from '../types';
-import { ChevronDown, Edit2, Check, HelpCircle, Sparkles } from 'lucide-react';
+import { ChevronDown, Edit2, Check, HelpCircle } from 'lucide-react';
 
 export const FAQAccordion: React.FC = () => {
   const [faqs, setFaqs] = useState<FAQItem[]>(productData.faqs);
@@ -25,25 +25,24 @@ export const FAQAccordion: React.FC = () => {
   };
 
   return (
-    <section id="faq" className="w-full py-16 sm:py-24 bg-canvas-light dark:bg-canvas-dark border-b border-border-light dark:border-border-dark transition-colors duration-300">
+    <section id="faq" className="w-full py-16 sm:py-24 bg-[#0A0B0E] border-b border-white/5 transition-colors duration-300">
       <div className="max-w-4xl mx-auto px-5 sm:px-8">
         
         {/* Header */}
-        <div className="text-center mb-12 sm:mb-14">
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white dark:bg-[#141A1E] border border-border-light dark:border-border-dark text-[11px] font-semibold tracking-[0.2em] uppercase text-ink-lightMuted dark:text-ink-darkMuted shadow-sm mb-3">
-            <Sparkles className="w-3 h-3 text-teal" />
-            <span>Common Inquiries</span>
-          </div>
-          <h2 className="font-sans text-2xl sm:text-3xl lg:text-4xl text-ink-light dark:text-ink-dark font-medium uppercase tracking-heading">
-            Frequently asked questions
+        <div className="text-left mb-12 sm:mb-14">
+          <span className="text-xs font-semibold tracking-[0.25em] uppercase text-[#EAA858] block mb-3">
+            FAQ
+          </span>
+          <h2 className="font-sans text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight leading-tight">
+            Frequently Asked Questions.
           </h2>
-          <p className="mt-3 text-xs sm:text-sm text-ink-lightMuted dark:text-ink-darkMuted font-light">
+          <p className="mt-3 text-sm text-neutral-400 font-normal">
             Clear, honest answers about our heatless curler set and order process.
           </p>
         </div>
 
-        {/* Kree8-style Floating Clay Accordion Container */}
-        <div className="clay-card rounded-[28px] sm:rounded-[32px] p-6 sm:p-10 divide-y divide-border-light dark:divide-border-dark">
+        {/* Dark Video Accordion Container */}
+        <div className="video-dark-card p-6 sm:p-10 divide-y divide-[#1E2529]">
           {faqs.map((faq, index) => {
             const isEditing = editingId === faq.id;
             return (
@@ -54,35 +53,35 @@ export const FAQAccordion: React.FC = () => {
                 open={index === 0 ? true : undefined}
               >
                 <summary className="cursor-pointer list-none py-5 sm:py-6 flex items-center justify-between text-left select-none focus-visible:outline-none">
-                  <span className="font-sans text-sm sm:text-base text-ink-light dark:text-ink-dark font-medium uppercase tracking-wide group-hover:text-teal transition-colors pr-4">
+                  <span className="font-sans text-sm sm:text-base text-white font-semibold uppercase tracking-wide group-hover:text-[#EAA858] transition-colors pr-4">
                     {faq.question}
                   </span>
                   
                   <div className="flex items-center space-x-3 shrink-0">
                     <button
                       onClick={(e) => (isEditing ? saveEdit(e, faq.id) : startEdit(e, faq))}
-                      className="text-ink-lightSubtle dark:text-ink-darkSubtle hover:text-teal opacity-40 group-hover:opacity-100 transition-opacity p-1 cursor-pointer"
+                      className="text-neutral-500 hover:text-[#EAA858] opacity-40 group-hover:opacity-100 transition-opacity p-1 cursor-pointer"
                       title={isEditing ? 'Save answer' : 'Edit answer placeholder'}
                       aria-label="Edit FAQ answer"
                     >
-                      {isEditing ? <Check className="w-3.5 h-3.5 text-teal" /> : <Edit2 className="w-3.5 h-3.5" />}
+                      {isEditing ? <Check className="w-3.5 h-3.5 text-[#EAA858]" /> : <Edit2 className="w-3.5 h-3.5" />}
                     </button>
                     
-                    {/* Tactile circle chevron indicator */}
-                    <div className="w-8 h-8 rounded-full bg-canvas-light dark:bg-[#1E262B] flex items-center justify-center text-ink-light dark:text-ink-dark border border-border-light dark:border-border-dark transition-all duration-300 group-open:bg-teal group-open:text-white group-open:border-teal group-open:rotate-180 shadow-sm">
+                    {/* Circle chevron indicator */}
+                    <div className="w-8 h-8 rounded-full bg-[#181D21] flex items-center justify-center text-neutral-400 border border-[#252E34] transition-all duration-300 group-open:bg-[#EAA858] group-open:text-black group-open:border-[#EAA858] group-open:rotate-180 shadow-sm">
                       <ChevronDown className="w-4 h-4 stroke-[2]" />
                     </div>
                   </div>
                 </summary>
 
-                <div className="pb-6 text-xs sm:text-sm text-ink-lightMuted dark:text-ink-darkMuted font-light leading-relaxed max-w-3xl">
+                <div className="pb-6 text-xs sm:text-sm text-neutral-300 font-normal leading-relaxed max-w-3xl">
                   {isEditing ? (
                     <div className="space-y-3 pt-2" onClick={(e) => e.stopPropagation()}>
                       <textarea
                         value={tempAnswer}
                         onChange={(e) => setTempAnswer(e.target.value)}
                         rows={4}
-                        className="w-full bg-white dark:bg-[#1A2227] border border-teal text-ink-light dark:text-ink-dark text-xs sm:text-sm p-3 rounded-xl focus:outline-none"
+                        className="w-full bg-[#181C20] border border-[#EAA858] text-white text-xs sm:text-sm p-3 rounded-xl focus:outline-none"
                       />
                       <div className="flex justify-end space-x-2">
                         <button
@@ -90,20 +89,20 @@ export const FAQAccordion: React.FC = () => {
                             e.stopPropagation();
                             setEditingId(null);
                           }}
-                          className="px-4 py-1.5 rounded-full border border-border-light dark:border-border-dark text-xs text-ink-lightMuted dark:text-ink-darkMuted cursor-pointer hover:bg-black/5 dark:hover:bg-white/5"
+                          className="px-4 py-1.5 rounded-full border border-[#263037] text-xs text-neutral-400 cursor-pointer hover:text-white"
                         >
                           Cancel
                         </button>
                         <button
                           onClick={(e) => saveEdit(e, faq.id)}
-                          className="btn-clay-teal px-5 py-1.5 text-xs font-medium"
+                          className="btn-amber px-5 py-1.5 text-xs font-semibold"
                         >
                           Save
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <p className="pl-1">{faq.answer}</p>
+                    <p className="pl-1 text-neutral-400">{faq.answer}</p>
                   )}
                 </div>
               </details>
@@ -112,8 +111,8 @@ export const FAQAccordion: React.FC = () => {
         </div>
 
         {/* Small Note Pill */}
-        <div className="mt-10 text-center text-xs text-ink-lightMuted dark:text-ink-darkMuted font-light flex items-center justify-center space-x-2">
-          <HelpCircle className="w-3.5 h-3.5 text-teal shrink-0 stroke-[1.8]" />
+        <div className="mt-10 text-center text-xs text-neutral-400 flex items-center justify-center space-x-2">
+          <HelpCircle className="w-3.5 h-3.5 text-[#EAA858] shrink-0 stroke-[1.8]" />
           <span>Need further assistance? Contact our care team at concierge@sereinbeauty.com</span>
         </div>
 

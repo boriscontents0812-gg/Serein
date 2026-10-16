@@ -7,6 +7,7 @@ import { HeroProduct } from './components/HeroProduct';
 import { BenefitsStrip } from './components/BenefitsStrip';
 import { ProductDetails } from './components/ProductDetails';
 import { HowItWorks } from './components/HowItWorks';
+import { ReviewsSection } from './components/ReviewsSection';
 import { FAQAccordion } from './components/FAQAccordion';
 import { Footer } from './components/Footer';
 import { CartDrawer } from './components/CartDrawer';
@@ -46,7 +47,7 @@ const StoreContent: React.FC = () => {
   }, [openCart, setCheckoutNotice, clearCart]);
 
   return (
-    <div className="min-h-screen bg-canvas-light dark:bg-canvas-dark text-ink-light dark:text-ink-dark flex flex-col font-sans transition-colors duration-300 selection:bg-teal selection:text-white">
+    <div className="min-h-screen bg-[#0A0B0E] text-white flex flex-col font-sans transition-colors duration-300 selection:bg-[#EAA858] selection:text-black">
       {/* Slim Announcement Bar */}
       <AnnouncementBar />
 
@@ -58,7 +59,7 @@ const StoreContent: React.FC = () => {
         {/* Hero Section with Product Gallery and Purchase Controls */}
         <HeroProduct />
 
-        {/* Benefits Strip (Style without heat, 60" design, simple routine) */}
+        {/* Benefits Strip (4-Card Grid matching video) */}
         <BenefitsStrip />
 
         {/* Product Details Editorial & Included Set */}
@@ -66,6 +67,9 @@ const StoreContent: React.FC = () => {
 
         {/* How It Works (01-05 Visual Sequence) */}
         <HowItWorks />
+
+        {/* Customer Reviews Section */}
+        <ReviewsSection />
 
         {/* Accessible FAQ Disclosures */}
         <FAQAccordion />

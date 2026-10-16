@@ -31,23 +31,26 @@
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    color-scheme: dark;
   }
 
-  /* Default theme: White / Light Mode */
-  html:not(.dark) {
-    background-color: #F5F6F8;
-    color: #111827;
-  }
-
-  /* Dark theme */
+  /* Default theme: Dark Luxury Aesthetic (matching video) */
   html.dark {
-    background-color: #0A0D0F;
-    color: #F4F1EB;
+    background-color: #0A0B0E;
+    color: #FFFFFF;
+    color-scheme: dark;
+  }
+
+  /* Optional Light theme */
+  html:not(.dark) {
+    background-color: #F8F9FA;
+    color: #111827;
+    color-scheme: light;
   }
 
   body {
-    font-family: "DLYP", system-ui, -apple-system, sans-serif;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    font-family: Inter, system-ui, -apple-system, sans-serif;
+    transition: background-color 0.25s ease, color 0.25s ease;
     min-height: 100vh;
   }
 
@@ -112,6 +115,38 @@
     box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.5),
                 0px 16px 36px rgba(0, 0, 0, 0.35),
                 inset 0px 1px 0px rgba(255, 255, 255, 0.08);
+  }
+
+  /* Video Reference Glowing Amber Button ('GET YOURS') */
+  .btn-amber {
+    @apply inline-flex items-center justify-center font-bold rounded-full transition-all duration-200 cursor-pointer select-none active:scale-[0.97];
+    background: linear-gradient(135deg, #EAA858 0%, #D98E3A 100%);
+    color: #0A0B0E;
+    box-shadow: 0px 4px 15px rgba(234, 168, 88, 0.28), 0px 1px 2px rgba(0, 0, 0, 0.2);
+  }
+  .btn-amber:hover {
+    background: linear-gradient(135deg, #F4B266 0%, #E09641 100%);
+    box-shadow: 0px 6px 20px rgba(234, 168, 88, 0.4);
+    transform: translateY(-1px);
+  }
+
+  /* Amber text gradient matching the video headline (e.g. 'Recharge.') */
+  .gradient-amber-text {
+    background: linear-gradient(135deg, #EAA858 0%, #F4B266 50%, #D98E3A 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Dark Card (matching benefits cards from frame_04 / sec_05) */
+  .video-dark-card {
+    background-color: #121518;
+    border: 1px solid #1E2529;
+    border-radius: 24px;
+    transition: all 0.3s ease;
+  }
+  .video-dark-card:hover {
+    border-color: #2D373D;
+    transform: translateY(-2px);
   }
 
   /* Tactile Teal Pill Button */

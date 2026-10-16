@@ -47,13 +47,16 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({ images }) => {
 
   return (
     <div className="w-full flex flex-col space-y-4">
-      {/* Main Large Image Stage (Kree8-style floating rounded canvas) */}
+      {/* Main Large Image Stage (Matching the video's dark floating product stage) */}
       <div
-        className="relative w-full aspect-square bg-white dark:bg-[#141A1E] border border-border-light dark:border-border-dark rounded-[24px] sm:rounded-[28px] overflow-hidden group shadow-clay dark:shadow-clay-dark transition-all duration-300"
+        className="relative w-full aspect-square sm:aspect-[4/3.8] bg-gradient-to-b from-[#14181B] via-[#0E1114] to-[#0A0B0E] border border-[#21272C] rounded-[28px] sm:rounded-[36px] overflow-hidden group shadow-2xl transition-all duration-300 flex items-center justify-center"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
+        {/* Subtle Ambient Radial Glow */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(37,182,167,0.08)_0%,transparent_70%)] pointer-events-none" />
+
         <img
           src={currentImage.src}
           alt={currentImage.alt}
@@ -61,38 +64,48 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({ images }) => {
           loading="eager"
         />
 
-        {/* Category Badge */}
-        <div className="absolute top-4 left-4 z-10">
-          <span className="inline-flex items-center px-3.5 py-1 bg-white/95 dark:bg-[#1C252B]/95 backdrop-blur-md rounded-full text-[10px] font-medium tracking-[0.16em] uppercase text-ink-light dark:text-ink-dark border border-border-light dark:border-border-dark shadow-sm">
+        {/* Category Pill Tag */}
+        <div className="absolute top-5 left-5 z-10">
+          <span className="inline-flex items-center px-3.5 py-1 bg-black/60 backdrop-blur-md rounded-full text-[10px] font-semibold tracking-[0.18em] uppercase text-white border border-white/10 shadow-md">
             {currentImage.label}
           </span>
         </div>
 
+        {/* Video Amber Play / View Floating Badge (matching frame_01.png) */}
+        <button
+          onClick={() => setIsZoomModalOpen(true)}
+          className="absolute left-6 bottom-6 z-10 w-11 h-11 bg-gradient-to-tr from-[#EAA858] to-[#F4B266] text-black rounded-full flex items-center justify-center shadow-lg shadow-amber-500/20 hover:scale-110 active:scale-95 transition-transform cursor-pointer"
+          title="Inspect high-resolution details"
+          aria-label="View photo"
+        >
+          <div className="w-0 h-0 border-y-[6px] border-y-transparent border-l-[10px] border-l-black ml-0.5" />
+        </button>
+
         {/* Zoom Lightbox Trigger */}
         <button
           onClick={() => setIsZoomModalOpen(true)}
-          className="absolute top-4 right-4 z-10 p-2.5 bg-white/95 dark:bg-[#1C252B]/95 text-ink-light dark:text-ink-dark hover:text-teal dark:hover:text-teal transition-all rounded-full border border-border-light dark:border-border-dark shadow-sm hover:scale-105 opacity-80 group-hover:opacity-100"
+          className="absolute top-5 right-5 z-10 p-2.5 bg-black/60 backdrop-blur-md text-neutral-300 hover:text-white transition-all rounded-full border border-white/10 shadow-sm hover:scale-105"
           title="View high-resolution photograph"
           aria-label="Enlarge image"
         >
-          <Maximize2 className="w-4 h-4 stroke-[1.5]" />
+          <Maximize2 className="w-4 h-4 stroke-[1.8]" />
         </button>
 
         {/* Prev / Next arrows */}
         <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-3 pointer-events-none">
           <button
             onClick={handlePrev}
-            className="pointer-events-auto p-2.5 bg-white/95 dark:bg-[#1C252B]/95 hover:bg-white text-ink-light dark:text-ink-dark transition-all rounded-full border border-border-light dark:border-border-dark shadow-sm -translate-x-1 group-hover:translate-x-0 opacity-0 group-hover:opacity-100 sm:opacity-80 hover:scale-105"
+            className="pointer-events-auto p-2.5 bg-black/60 backdrop-blur-md hover:bg-black/80 text-white transition-all rounded-full border border-white/10 shadow-sm -translate-x-1 group-hover:translate-x-0 opacity-0 group-hover:opacity-100 sm:opacity-70 hover:scale-105 cursor-pointer"
             aria-label="Previous image"
           >
-            <ChevronLeft className="w-4 h-4 stroke-[1.5]" />
+            <ChevronLeft className="w-4 h-4 stroke-[1.8]" />
           </button>
           <button
             onClick={handleNext}
-            className="pointer-events-auto p-2.5 bg-white/95 dark:bg-[#1C252B]/95 hover:bg-white text-ink-light dark:text-ink-dark transition-all rounded-full border border-border-light dark:border-border-dark shadow-sm translate-x-1 group-hover:translate-x-0 opacity-0 group-hover:opacity-100 sm:opacity-80 hover:scale-105"
+            className="pointer-events-auto p-2.5 bg-black/60 backdrop-blur-md hover:bg-black/80 text-white transition-all rounded-full border border-white/10 shadow-sm translate-x-1 group-hover:translate-x-0 opacity-0 group-hover:opacity-100 sm:opacity-70 hover:scale-105 cursor-pointer"
             aria-label="Next image"
           >
-            <ChevronRight className="w-4 h-4 stroke-[1.5]" />
+            <ChevronRight className="w-4 h-4 stroke-[1.8]" />
           </button>
         </div>
 
@@ -103,7 +116,7 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({ images }) => {
               key={idx}
               onClick={() => setCurrentIndex(idx)}
               className={`h-1.5 rounded-full transition-all duration-300 ${
-                idx === currentIndex ? 'w-5 bg-teal' : 'w-1.5 bg-ink-lightSubtle/40 dark:bg-ink-darkSubtle/40'
+                idx === currentIndex ? 'w-5 bg-[#EAA858]' : 'w-1.5 bg-white/30'
               }`}
               aria-label={`Slide ${idx + 1}`}
             />
@@ -122,10 +135,10 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({ images }) => {
             <button
               key={img.id}
               onClick={() => setCurrentIndex(idx)}
-              className={`relative aspect-square overflow-hidden bg-white dark:bg-[#141A1E] border rounded-2xl transition-all duration-300 group cursor-pointer ${
+              className={`relative aspect-[4/3] overflow-hidden bg-[#121518] border rounded-2xl transition-all duration-200 group cursor-pointer ${
                 isActive
-                  ? 'border-teal ring-2 ring-teal/30 scale-[1.02] shadow-sm'
-                  : 'border-border-light dark:border-border-dark opacity-75 hover:opacity-100 hover:scale-[1.02]'
+                  ? 'border-[#EAA858] ring-1 ring-[#EAA858]/40 scale-[1.02] shadow-md'
+                  : 'border-[#1E2529] opacity-70 hover:opacity-100 hover:border-[#2E373D]'
               }`}
               aria-label={`Select ${img.label}`}
             >
@@ -134,7 +147,7 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({ images }) => {
                 alt={img.alt}
                 className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
               />
-              <span className="absolute bottom-0 inset-x-0 text-[10px] text-center font-medium tracking-wider text-ink-light dark:text-ink-dark truncate bg-white/95 dark:bg-[#1C252B]/95 py-1 border-t border-border-light dark:border-border-dark">
+              <span className="absolute bottom-0 inset-x-0 text-[10px] text-center font-medium tracking-wider text-neutral-300 truncate bg-black/75 backdrop-blur-xs py-1 border-t border-white/5">
                 {img.label}
               </span>
             </button>

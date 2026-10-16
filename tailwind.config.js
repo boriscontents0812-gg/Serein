@@ -8,29 +8,38 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Light theme / Clay palette (inspired by kree8.studio + Deadly Ponies)
+        // Dark video canvas palette
         canvas: {
           light: '#F5F6F8',
-          dark: '#0A0D0F',
+          dark: '#0A0B0E',
         },
         card: {
           light: '#FFFFFF',
-          dark: '#141A1D',
-          darkRaised: '#1B2327',
+          dark: '#121518',
+          darkRaised: '#181C20',
         },
         ink: {
           light: '#111827',
           lightMuted: '#4B5563',
           lightSubtle: '#9CA3AF',
-          dark: '#F4F1EB',
-          darkMuted: '#94A3B8',
+          dark: '#FFFFFF',
+          darkMuted: '#9CA3AF',
           darkSubtle: '#64748B',
         },
         border: {
           light: '#E5E8EC',
           lightHairline: '#EFF2F5',
-          dark: '#222D33',
-          darkHairline: '#182126',
+          dark: '#1E2529',
+          darkHairline: '#15191C',
+        },
+        // Warm Honey Amber / Gold (from the video's 'GET YOURS' button & stars)
+        amber: {
+          DEFAULT: '#EAA858',
+          hover: '#F4B266',
+          dark: '#D98E3A',
+          gold: '#EAA858',
+          goldLight: '#F4B266',
+          goldDark: '#D98E3A',
         },
         // Serein Signature Teal
         teal: {
@@ -62,9 +71,9 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['"DLYP"', 'system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif'],
         serif: ['"SerifDisplay"', '"DLYP-Serif"', 'Georgia', 'serif'],
-        display: ['"DLYP"', 'sans-serif'],
+        display: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
         editorial: ['"SerifDisplay"', '"DLYP-Serif"', 'Georgia', 'serif'],
       },
       letterSpacing: {
