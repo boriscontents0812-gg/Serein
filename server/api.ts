@@ -18,7 +18,7 @@ export function getStripeClient(): { stripe: Stripe | null; isConfigured: boolea
 
   try {
     const stripe = new Stripe(key.trim(), {
-      apiVersion: '2024-11-20.acacia',
+      apiVersion: '2026-09-30.endive' as any,
       appInfo: {
         name: 'Serein Beauty Store',
         version: '1.0.0'
@@ -32,6 +32,27 @@ export function getStripeClient(): { stripe: Stripe | null; isConfigured: boolea
       error: `Invalid Stripe configuration: ${err.message}`
     };
   }
+}
+
+// Robust helper to extract customer and shipping details across Stripe API versions
+function extractCustomerDetails(session: any): CustomerDetails {
+  const customer = session?.customer_details;
+  const shipping = session?.collected_information?.shipping_details || session?.shipping_details;
+  const address = shipping?.address || customer?.address;
+
+  return {
+    email: customer?.email || undefined,
+    name: customer?.name || shipping?.name || undefined,
+    phone: customer?.phone || shipping?.phone || undefined,
+    shippingAddress: address ? {
+      line1: address.line1 || undefined,
+      line2: address.line2 || undefined,
+      city: address.city || undefined,
+      state: address.state || undefined,
+      postal_code: address.postal_code || undefined,
+      country: address.country || undefined,
+    } : undefined
+  };
 }
 
 // Trusted product lookup
@@ -157,7 +178,6 @@ export async function handleCreateCheckoutSession(reqBody: any, origin: string) 
   const cleanOrigin = origin.replace(/\/$/, '');
   try {
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
       line_items: lineItemsForStripe,
       mode: 'payment',
       billing_address_collection: 'auto',
@@ -260,20 +280,8 @@ export async function handleWebhookEvent(rawBody: Buffer | string, signature: st
   // Handle specific Stripe events
   switch (event.type) {
     case 'checkout.session.completed': {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const customerDetails: CustomerDetails = {
-        email: session.customer_details?.email || undefined,
-        name: session.customer_details?.name || undefined,
-        phone: session.customer_details?.phone || undefined,
-        shippingAddress: session.shipping_details?.address ? {
-          line1: session.shipping_details.address.line1 || undefined,
-          line2: session.shipping_details.address.line2 || undefined,
-          city: session.shipping_details.address.city || undefined,
-          state: session.shipping_details.address.state || undefined,
-          postal_code: session.shipping_details.address.postal_code || undefined,
-          country: session.shipping_details.address.country || undefined,
-        } : undefined
-      };
+      const session = event.data.object as any;
+      const customerDetails = extractCustomerDetails(session);
 
       const result = OrderRepository.markOrderAsPaid({
         sessionId: session.id,
@@ -319,19 +327,7 @@ export async function handleGetOrderStatus(sessionId: string) {
       try {
         const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
         if (stripeSession.payment_status === 'paid') {
-          const customerDetails: CustomerDetails = {
-            email: stripeSession.customer_details?.email || undefined,
-            name: stripeSession.customer_details?.name || undefined,
-            phone: stripeSession.customer_details?.phone || undefined,
-            shippingAddress: stripeSession.shipping_details?.address ? {
-              line1: stripeSession.shipping_details.address.line1 || undefined,
-              line2: stripeSession.shipping_details.address.line2 || undefined,
-              city: stripeSession.shipping_details.address.city || undefined,
-              state: stripeSession.shipping_details.address.state || undefined,
-              postal_code: stripeSession.shipping_details.address.postal_code || undefined,
-              country: stripeSession.shipping_details.address.country || undefined,
-            } : undefined
-          };
+          const customerDetails = extractCustomerDetails(stripeSession);
 
           const updated = OrderRepository.markOrderAsPaid({
             sessionId,
