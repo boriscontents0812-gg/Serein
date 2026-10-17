@@ -92,14 +92,30 @@ export default async function handler(req: any, res: any) {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
     const { items, email, shippingAddress } = body;
 
-    // Validate token exists
+    // If token is not yet configured, provide seamless direct checkout URL so checkout never fails
     if (!token) {
+      const itemsString = (Array.isArray(items) && items.length > 0 ? items : [{ variantId: defaultVariantId, quantity: 1 }])
+        .map((item: any) => `${String(item.variantId || defaultVariantId).replace('gid://shopify/ProductVariant/', '')}:${Math.max(1, parseInt(String(item.quantity || 1), 10))}`)
+        .join(',');
+
+      const fallbackUrl = new URL(`https://${domain}/cart/${itemsString}`);
+      if (email) fallbackUrl.searchParams.set('checkout[email]', email.trim());
+      if (shippingAddress) {
+        if (shippingAddress.firstName) fallbackUrl.searchParams.set('checkout[shipping_address][first_name]', shippingAddress.firstName);
+        if (shippingAddress.lastName) fallbackUrl.searchParams.set('checkout[shipping_address][last_name]', shippingAddress.lastName);
+        if (shippingAddress.address1) fallbackUrl.searchParams.set('checkout[shipping_address][address1]', shippingAddress.address1);
+        if (shippingAddress.address2) fallbackUrl.searchParams.set('checkout[shipping_address][address2]', shippingAddress.address2);
+        if (shippingAddress.city) fallbackUrl.searchParams.set('checkout[shipping_address][city]', shippingAddress.city);
+        if (shippingAddress.province) fallbackUrl.searchParams.set('checkout[shipping_address][province]', shippingAddress.province);
+        if (shippingAddress.country) fallbackUrl.searchParams.set('checkout[shipping_address][country]', shippingAddress.country);
+        if (shippingAddress.zip) fallbackUrl.searchParams.set('checkout[shipping_address][zip]', shippingAddress.zip);
+        if (shippingAddress.phone) fallbackUrl.searchParams.set('checkout[shipping_address][phone]', shippingAddress.phone);
+      }
+
       res.status(200).json({
-        success: false,
-        error: 'Shopify Storefront API token is not yet configured in Vercel.',
-        code: 'MISSING_STOREFRONT_TOKEN',
-        setupRequired: true,
-        message: 'Please add SHOPIFY_STOREFRONT_ACCESS_TOKEN to Vercel Project Settings > Environment Variables.'
+        success: true,
+        checkoutUrl: fallbackUrl.toString(),
+        isDirectCart: true
       });
       return;
     }

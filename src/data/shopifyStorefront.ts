@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { getShopifyConfig } from './shopifyConfig';
+import { getShopifyConfig, buildShopifyCheckoutUrl } from './shopifyConfig';
 
 export interface ShopifyLineItem {
   variantId: string;
@@ -200,12 +200,29 @@ export async function createShopifyCheckoutSession(
     }
   }
 
-  // 3. Fallback: if credentials are missing, provide an actionable and clear message
+  // 3. Fallback: If Storefront API token is not yet configured, build direct Shopify cart checkout URL
+  // with prefilled customer details so checkout proceeds immediately without blocking!
+  const fallbackUrl = buildShopifyCheckoutUrl({
+    storeDomain: domain,
+    items: effectiveItems.map((item) => ({
+      variantId: item.variantId || defaultVariantId,
+      quantity: item.quantity,
+    })),
+    email: params.email,
+    firstName: params.shippingAddress?.firstName,
+    lastName: params.shippingAddress?.lastName,
+    address: params.shippingAddress?.address1,
+    apartment: params.shippingAddress?.address2,
+    city: params.shippingAddress?.city,
+    province: params.shippingAddress?.province,
+    country: params.shippingAddress?.country,
+    postalCode: params.shippingAddress?.zip,
+    phone: params.shippingAddress?.phone,
+  });
+
   return {
-    success: false,
-    setupRequired: true,
-    error:
-      'Shopify Storefront API credentials are required to create real checkout sessions. Please configure SHOPIFY_STOREFRONT_ACCESS_TOKEN in Vercel environment variables.',
+    success: true,
+    checkoutUrl: fallbackUrl,
   };
 }
 
