@@ -159,15 +159,51 @@ export async function handleCreateCheckoutSession(reqBody: any, origin: string) 
   }
 
   // 3. Check for Shopify Checkout integration
-  const shopifyDomain = process.env.SHOPIFY_STORE_DOMAIN || process.env.VITE_SHOPIFY_STORE_DOMAIN || 'serein.myshopify.com';
-  const shopifyVariantId = process.env.SHOPIFY_VARIANT_ID || process.env.VITE_SHOPIFY_VARIANT_ID || '44812345678901';
-  const { stripe, isConfigured, error } = getStripeClient();
+  const shopifyDomain = (process.env.SHOPIFY_STORE_DOMAIN || process.env.VITE_SHOPIFY_STORE_DOMAIN || 'f0jzb7-r0.myshopify.com')
+    .replace(/^https?:\/\//, '')
+    .replace(/\/$/, '');
+  const shopifyVariantId = process.env.SHOPIFY_VARIANT_ID || process.env.VITE_SHOPIFY_VARIANT_ID || '51592955855122';
+  const storefrontToken = (process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN || process.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN || '').trim();
+  const apiVersion = process.env.SHOPIFY_API_VERSION || '2024-07';
+  const { stripe, isConfigured } = getStripeClient();
 
-  // If Stripe is not configured or Shopify is specified, generate Shopify checkout permalink
+  // If Stripe is not configured or Shopify is specified, generate Shopify checkout
   if (!isConfigured || !stripe) {
-    const totalQty = validatedOrderItems.reduce((acc, i) => acc + i.quantity, 0);
-    const cleanDomain = shopifyDomain.replace(/^https?:\/\//, '').replace(/\/$/, '');
-    const shopifyUrl = `https://${cleanDomain}/cart/${shopifyVariantId}:${totalQty}`;
+    let checkoutUrl = '';
+
+    // If Storefront Access Token is configured, create real Shopify cart
+    if (storefrontToken) {
+      try {
+        const merchandiseId = shopifyVariantId.startsWith('gid://')
+          ? shopifyVariantId
+          : `gid://shopify/ProductVariant/${shopifyVariantId}`;
+        const totalQty = validatedOrderItems.reduce((acc, i) => acc + i.quantity, 0);
+
+        const gqlRes = await fetch(`https://${shopifyDomain}/api/${apiVersion}/graphql.json`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Shopify-Storefront-Access-Token': storefrontToken
+          },
+          body: JSON.stringify({
+            query: `mutation cartCreate($input: CartInput!) { cartCreate(input: $input) { cart { id checkoutUrl } userErrors { field message } } }`,
+            variables: { input: { lines: [{ merchandiseId, quantity: totalQty }] } }
+          })
+        });
+        if (gqlRes.ok) {
+          const gqlData = await gqlRes.json();
+          checkoutUrl = gqlData.data?.cartCreate?.cart?.checkoutUrl || '';
+        }
+      } catch (err) {
+        console.warn('[SERVER SHOPIFY GQL ERROR]', err);
+      }
+    }
+
+    if (!checkoutUrl) {
+      const totalQty = validatedOrderItems.reduce((acc, i) => acc + i.quantity, 0);
+      checkoutUrl = `https://${shopifyDomain}/cart/${shopifyVariantId}:${totalQty}`;
+    }
+
     const orderId = `SEREIN-${Date.now().toString(36).toUpperCase()}`;
 
     OrderRepository.createOrder({
@@ -188,7 +224,7 @@ export async function handleCreateCheckoutSession(reqBody: any, origin: string) 
         success: true,
         provider: 'shopify',
         sessionId: `shopify_${orderId}`,
-        url: shopifyUrl,
+        url: checkoutUrl,
         orderId
       }
     };

@@ -3,6 +3,7 @@
 export interface ShopifyConfig {
   storeDomain: string;
   variantId: string;
+  storefrontAccessToken?: string;
 }
 
 const STORAGE_KEY = 'serein_shopify_config';
@@ -13,6 +14,7 @@ export const DEFAULT_SHOPIFY_CONFIG: ShopifyConfig = {
     .replace(/^https?:\/\//, '')
     .replace(/\/$/, ''),
   variantId: (import.meta as any).env?.VITE_SHOPIFY_VARIANT_ID || '51592955855122',
+  storefrontAccessToken: ((import.meta as any).env?.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN || '').trim(),
 };
 
 export function getShopifyConfig(): ShopifyConfig {
@@ -26,6 +28,7 @@ export function getShopifyConfig(): ShopifyConfig {
           .replace(/^https?:\/\//, '')
           .replace(/\/$/, ''),
         variantId: parsed.variantId || DEFAULT_SHOPIFY_CONFIG.variantId,
+        storefrontAccessToken: (parsed.storefrontAccessToken || DEFAULT_SHOPIFY_CONFIG.storefrontAccessToken || '').trim(),
       };
     }
   } catch {
@@ -37,9 +40,10 @@ export function getShopifyConfig(): ShopifyConfig {
 export function saveShopifyConfig(config: ShopifyConfig): void {
   if (typeof window === 'undefined') return;
   try {
-    const clean = {
+    const clean: ShopifyConfig = {
       storeDomain: config.storeDomain.replace(/^https?:\/\//, '').replace(/\/$/, ''),
       variantId: config.variantId.trim(),
+      storefrontAccessToken: (config.storefrontAccessToken || '').trim(),
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(clean));
   } catch (e) {

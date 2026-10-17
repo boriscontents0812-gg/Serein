@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { productData } from '../data/product';
-import { getShopifyConfig, saveShopifyConfig, buildShopifyCheckoutUrl, ShopifyConfig } from '../data/shopifyConfig';
-import { ArrowLeft, Lock, ShieldCheck, CheckCircle2, Settings2, X, Store } from 'lucide-react';
+import { getShopifyConfig, saveShopifyConfig, ShopifyConfig } from '../data/shopifyConfig';
+import { createShopifyCheckoutSession, navigateToShopifyCheckout } from '../data/shopifyStorefront';
+import { ArrowLeft, Lock, ShieldCheck, CheckCircle2, Settings2, X, Store, AlertCircle } from 'lucide-react';
 
 interface CheckoutSectionProps {
   onSuccessOrder?: (sessionId: string) => void;
@@ -16,6 +17,7 @@ export const CheckoutSection: React.FC<CheckoutSectionProps> = ({ onSuccessOrder
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [tempDomain, setTempDomain] = useState(shopifyConfig.storeDomain);
   const [tempVariantId, setTempVariantId] = useState(shopifyConfig.variantId);
+  const [tempToken, setTempToken] = useState(shopifyConfig.storefrontAccessToken || '');
   const [configSavedNotice, setConfigSavedNotice] = useState(false);
 
   // Form states matching video
@@ -54,6 +56,7 @@ export const CheckoutSection: React.FC<CheckoutSectionProps> = ({ onSuccessOrder
     const newConfig: ShopifyConfig = {
       storeDomain: tempDomain.trim().replace(/^https?:\/\//, '').replace(/\/$/, ''),
       variantId: tempVariantId.trim(),
+      storefrontAccessToken: tempToken.trim(),
     };
     saveShopifyConfig(newConfig);
     setShopifyConfigState(newConfig);
@@ -86,33 +89,45 @@ export const CheckoutSection: React.FC<CheckoutSectionProps> = ({ onSuccessOrder
         addItem(1);
       }
 
-      // Build native Shopify Checkout URL with pre-filled customer details
-      const shopifyUrl = buildShopifyCheckoutUrl({
-        storeDomain: shopifyConfig.storeDomain,
+      // Create official Shopify cart via Storefront API to get real checkoutUrl
+      const result = await createShopifyCheckoutSession({
         items: effectiveItems.map((item) => ({
-          variantId: shopifyConfig.variantId,
+          variantId: shopifyConfig.variantId || '51592955855122',
           quantity: item.quantity,
         })),
         email,
-        firstName,
-        lastName,
-        address,
-        apartment,
-        city,
-        province: state,
-        country,
-        postalCode,
-        phone,
+        shippingAddress: {
+          firstName,
+          lastName,
+          address1: address,
+          address2: apartment,
+          city,
+          province: state,
+          country,
+          zip: postalCode,
+          phone,
+        },
       });
 
-      // Clear local cart
-      clearCart();
+      if (result.success && result.checkoutUrl) {
+        // Clear local cart now that the official checkout session is created
+        clearCart();
 
-      // Redirect immediately to Shopify's high-converting checkout!
-      window.location.href = shopifyUrl;
+        // Perform full-page top-level navigation in the same tab,
+        // breaking out of any iframes or embedded boxes
+        navigateToShopifyCheckout(result.checkoutUrl);
+        return;
+      }
+
+      // If Shopify Storefront API returned an error or configuration requirement:
+      setErrorMessage(
+        result.error ||
+          'Failed to create Shopify checkout session. Please check your Shopify Storefront API configuration in Vercel.'
+      );
+      setIsProcessing(false);
     } catch (err: any) {
       console.error('[SHOPIFY CHECKOUT ERROR]', err);
-      setErrorMessage('Failed to generate Shopify checkout link. Please verify store settings.');
+      setErrorMessage(err.message || 'An unexpected error occurred while connecting to Shopify checkout.');
       setIsProcessing(false);
     }
   };
@@ -354,8 +369,14 @@ export const CheckoutSection: React.FC<CheckoutSectionProps> = ({ onSuccessOrder
 
               {/* Error Message */}
               {errorMessage && (
-                <div className="bg-red-950/40 border border-red-900/60 p-4 rounded-2xl text-xs text-red-300 space-y-2 animate-fade-in shadow-sm">
-                  <p className="font-light leading-relaxed">{errorMessage}</p>
+                <div className="bg-red-950/50 border border-red-800/80 p-4 rounded-2xl text-xs text-red-200 space-y-2 animate-fade-in shadow-md">
+                  <div className="flex items-start space-x-2.5">
+                    <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                    <div className="flex-1 space-y-1">
+                      <p className="font-semibold text-white">Checkout Notice</p>
+                      <p className="font-light leading-relaxed">{errorMessage}</p>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -363,10 +384,19 @@ export const CheckoutSection: React.FC<CheckoutSectionProps> = ({ onSuccessOrder
               <button
                 type="submit"
                 disabled={isProcessing}
-                className="w-full py-4 rounded-full btn-amber text-black font-bold text-xs sm:text-sm tracking-[0.2em] uppercase flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-lg shadow-amber-500/10 hover:shadow-amber-500/20"
+                className="w-full py-4 rounded-full btn-amber text-black font-bold text-xs sm:text-sm tracking-[0.2em] uppercase flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-lg shadow-amber-500/10 hover:shadow-amber-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <Lock className="w-4 h-4 text-black stroke-[2.2]" />
-                <span>Pay ${effectiveTotal.toFixed(2)} with Shopify</span>
+                {isProcessing ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    <span>CREATING SHOPIFY CHECKOUT...</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-4 h-4 text-black stroke-[2.2]" />
+                    <span>Pay ${effectiveTotal.toFixed(2)} with Shopify</span>
+                  </>
+                )}
               </button>
 
               {/* Demo Mode trigger */}
@@ -532,6 +562,22 @@ export const CheckoutSection: React.FC<CheckoutSectionProps> = ({ onSuccessOrder
                   <p>2. Click on <strong>The Serein Heatless Curl Set</strong>.</p>
                   <p>3. In the URL bar or variant list, copy the 14-digit number at the end.</p>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs text-neutral-300 font-semibold mb-1">
+                  Storefront API Access Token (Public)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 32-character public Storefront Access Token"
+                  value={tempToken}
+                  onChange={(e) => setTempToken(e.target.value)}
+                  className="w-full bg-[#181D21] border border-[#252E34] focus:border-[#25B6A7] rounded-xl px-4 py-3 text-xs text-white outline-none font-mono"
+                />
+                <p className="text-[11px] text-neutral-500 mt-1">
+                  Optional in browser if already set as <code className="text-neutral-400">SHOPIFY_STOREFRONT_ACCESS_TOKEN</code> in Vercel.
+                </p>
               </div>
 
               {configSavedNotice && (
